@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <title>Marvel Impossible Travel</title>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+        <style>
+            .character-img {
+                width: 10vw;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="container-fluid">
+            <div class="row">
+                <div class="col-12">
+                    <h1>Marvel Impossible Travel</h1>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-12">
+                    <h2>Character</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-3">
+                    <img src="{{ character.picture }}" class="character-img">
+                </div>
+                <div class="col-3">
+                    <h3>{{ character.name }}</h3>
+                    <p>{{ character.description }}</p>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-5">
+            <div class="col-12">
+                <h2>Related Characters</h2>
+            </div>
+        </div>
+        <div class="row">
+            {% for character in character.related_characters %}
+                <div class="col">
+                    <div class="row">
+                        <div class="col">
+                            <img src="{{ character.picture }}" class="character-img">
+                        </div>
+                        <div class="col">
+                            <h3>{{ character.name|safe }}</h3>
+                            <p>{{ character.description|safe }}</p>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    </body>
+</html>
