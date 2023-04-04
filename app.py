@@ -3,8 +3,6 @@ from flask import Flask, render_template
 import sqlite3
 from dotenv import dotenv_values
 import requests
-import os
-import sys
 import time
 import hashlib
 import json
@@ -16,7 +14,7 @@ app.logger.setLevel(logging.INFO)
 config = dotenv_values(".env")
 
 character_name = "Spectrum" # Set the default character name
-# character_name = "Hawkeye" # Set the default character name
+
 @app.route("/")
 def index():
     # Get character by name (Spectrum)
@@ -30,12 +28,9 @@ def index():
         comics_str += str(comic.id) + ","
     # Get related characters from comics (characters that appear in the same comics)
     character.related_characters = get_related_characters(character)
-    app.logger.info("Related characters: " + str(len(character.related_characters)))
     # save characters and related characters relations in database
     save_related_characters(character)
     return render_template('index.html', character=character)
-    # return related_characters_str
-
 
 
 """
@@ -74,31 +69,17 @@ def get_character_comics(character_id):
             comics.append(Comic(comic))
     return comics
 
-
-# def get_related_characters(character):
-#     characters = []
-#     params = get_params()
-#     for comic in character.comics:
-#         url = config['API_URL'] + "/comics/" + str(comic.id) + "/characters"
-#         response = requests.get(url, params=params)
-#         data = response.json()['data']
-#         for chara in data['results']:
-#             if chara['id'] != character.id: # just add characters that are not the main character
-#                 characters.append(Character(chara))
-#     # remove duplicate characters
-#     return remove_duplicate_characters(characters)
-
 """
     This function return the related characters from all main character comics
 """
 def get_related_characters(character):
     params = get_params()
     # get get comics ids from character in group of 10
-    characters = []
-    comics_str = ""
+    characters = [] 
+    comics_str = "" 
     for comic in character.comics:
         comics_str += str(comic.id) + ","
-        if len(comics_str.split(",")) == 11 or comic == character.comics[-1]:
+        if len(comics_str.split(",")) == 11 or comic == character.comics[-1]: # get 10 comics ids at a time
             url = config['API_URL'] + "/characters?comics=" + comics_str
             response = requests.get(url, params=params)
             data = response.json()['data']
@@ -120,25 +101,33 @@ def save_related_characters(character):
     c.execute("SELECT id FROM characters WHERE id = " + str(character.id))
     result = c.fetchone()
     if result is None:
-        c.execute("INSERT INTO characters (id, name, description, picture) VALUES (?, ?, ?, ?)", (character.id, character.name, character.description, character.picture))
+        c.execute("INSERT INTO characters (id, name, description, picture) \
+                    VALUES (?, ?, ?, ?)", (character.id, character.name, character.description, 
+                    character.picture))
         conn.commit()
     else:
-        c.execute("UPDATE characters SET name = ?,  description = ?, picture = ? WHERE id = ?", (character.name, character.description, character.picture, character.id))
+        c.execute("UPDATE characters SET name = ?,  description = ?, picture = ? \
+                    WHERE id = ?", (character.name, character.description, character.picture, 
+                    character.id))
         conn.commit()
     # remove existing related characters
-    c.execute("DELETE FROM characters_relations WHERE character_one_id = ? OR character_two_id = ?", (character.id, character.id))
+    c.execute("DELETE FROM characters_relations WHERE character_one_id = ? OR \
+    character_two_id = ?", (character.id, character.id))
     conn.commit()
     for chara in character.related_characters:
         # select character id if exists
         c.execute("SELECT id FROM characters WHERE id = ?", (chara.id,))
         result = c.fetchone()
         if result is None:
-            c.execute("INSERT INTO characters (id, name, description, picture) VALUES (?, ?, ?, ?)", (chara.id, chara.name, chara.description, chara.picture))
+            c.execute("INSERT INTO characters (id, name, description, picture) VALUES \
+                        (?, ?, ?, ?)", (chara.id, chara.name, chara.description, chara.picture))
             conn.commit()
         else:
-            c.execute("UPDATE characters SET name = ?,  description = ?, picture = ? WHERE id = ?", (chara.name, chara.description, chara.picture, chara.id))
+            c.execute("UPDATE characters SET name = ?,  description = ?, picture = ? \
+                        WHERE id = ?", (chara.name, chara.description, chara.picture, chara.id))
             conn.commit()
-        c.execute("INSERT INTO characters_relations (character_one_id, character_two_id) VALUES (?, ?)", (character.id, chara.id))
+        c.execute("INSERT INTO characters_relations (character_one_id, character_two_id) \
+                    VALUES (?, ?)", (character.id, chara.id))
         conn.commit()
     conn.close()
 
@@ -157,10 +146,18 @@ def remove_duplicate_characters(characters):
 """
 def get_params():
     ts = str(time.time())
-    md5_hash = hashlib.md5(ts.encode() + config['API_PRIVATE_KEY'].encode() + config['API_PUBLIC_KEY'].encode()).hexdigest()
-    return {"ts": ts, "apikey": config['API_PUBLIC_KEY'], "hash": md5_hash, "limit": config['API_LIMIT']}
+    md5_hash = hashlib.md5(ts.encode() + config['API_PRIVATE_KEY'].encode() 
+                + config['API_PUBLIC_KEY'].encode()).hexdigest()
+    return {
+        "ts": ts, 
+        "apikey": config['API_PUBLIC_KEY'], 
+        "hash": md5_hash, 
+        "limit": config['API_LIMIT']
+    }
 
-
+"""
+    This function clean the database data
+"""
 def clear_database():
     conn = sqlite3.connect(config['DATABASE'])
     c = conn.cursor()
@@ -170,5 +167,6 @@ def clear_database():
     conn.close()
 
 if __name__ == "__main__":
+    # clean database
     clear_database()
     app.run(host="0.0.0.0", port=80)
