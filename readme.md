@@ -4,10 +4,7 @@
 This repository is a code assessment for Collage Group.
 
 ### Requirements
-git
-Docker
-python 3.9
-pip
+git, Docker, python 3.9, pip
 
 ## Installation
 
@@ -17,7 +14,7 @@ git clone <this-repository-url>
 cd ./marvel-back
 ```
 
-Set the enviroment variables inside file named ".env":
+Create a ".env" file and write the API keys:
 
 ```sh
 DATABASE=data/marvel.db
@@ -38,4 +35,3 @@ Open web browser with the url:
 ```sh
 http://localhost/
 ```
-
